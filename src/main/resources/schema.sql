@@ -1,6 +1,10 @@
+USE mysql;
+UPDATE user SET host = '%' WHERE host = '1%';
+FLUSH PRIVILEGES;
+
 create database scheduler;
 
-create table job_definition (
+create table scheduler.job_definition (
   id VARCHAR(64) NOT NULL PRIMARY KEY,
   name VARCHAR(64) NOT NULL,
   schedule VARCHAR(64) NOT NULL,
@@ -19,25 +23,25 @@ create table job_definition (
   std_err_file VARCHAR(512) NOT NULL
 );
 
-create table job_instances (
+create table scheduler.job_instances (
   id VARCHAR(64) NOT NULL PRIMARY KEY,
   job_id VARCHAR(64) NOT NULL,
   job_state VARCHAR(64) NOT NULL,
-  create_time timestamp NOT NULL
+  create_time timestamp default CURRENT_TIMESTAMP NOT NULL
 );
 
-create table jobs (
+create table scheduler.jobs (
   id VARCHAR(64) NOT NULL PRIMARY KEY,
   job_definition_id VARCHAR(64) NOT NULL,
   job_state VARCHAR(64) NOT NULL
 );
 
-create table job_run (
+create table scheduler.job_run (
   id VARCHAR(64) NOT NULL PRIMARY KEY,
   job_instance_id VARCHAR(64) NOT NULL,
   run_state VARCHAR(64) NOT NULL,
   job_state VARCHAR(64),
   exit_code INT,
-  start_time timestamp NOT NULL,
-  end_time timestamp
+  start_time timestamp default CURRENT_TIMESTAMP NOT NULL,
+  end_time timestamp default CURRENT_TIMESTAMP NOT NULL
 );
