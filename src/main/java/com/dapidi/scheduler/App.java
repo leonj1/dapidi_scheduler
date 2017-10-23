@@ -3,10 +3,12 @@ package com.dapidi.scheduler;
 import com.dapidi.scheduler.configs.AppProperties;
 import com.dapidi.scheduler.configs.HikariConfig;
 import com.dapidi.scheduler.controllers.CommunicationBetweenAgentsController;
+import com.dapidi.scheduler.controllers.HealthCheckController;
 import com.dapidi.scheduler.controllers.JobsController;
 import com.dapidi.scheduler.controllers.routes.agents.AddAgentRoute;
 import com.dapidi.scheduler.controllers.routes.agents.AgentCheckInRoute;
 import com.dapidi.scheduler.controllers.routes.agents.ListAllAgentsRoute;
+import com.dapidi.scheduler.controllers.routes.health.HealthCheckRoute;
 import com.dapidi.scheduler.controllers.routes.jobs.AddJobRoute;
 import com.dapidi.scheduler.controllers.routes.jobs.GetAllJobsRoute;
 import com.dapidi.scheduler.controllers.routes.jobs.UpdateJobInstanceRoute;
@@ -140,6 +142,9 @@ public class App {
                                 new AddAgentRoute(agentService),
                                 new AgentCheckInRoute(agentService),
                                 new ListAllAgentsRoute(agentService)
+                        ),
+                        new HealthCheckController(
+                                new HealthCheckRoute()
                         )
                 }
         );

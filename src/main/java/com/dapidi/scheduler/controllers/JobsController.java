@@ -5,10 +5,7 @@ import com.dapidi.scheduler.controllers.routes.jobs.GetAllJobsRoute;
 import com.dapidi.scheduler.controllers.routes.jobs.UpdateJobInstanceRoute;
 import com.dapidi.scheduler.controllers.routes.jobs.UpdateJobRoute;
 import com.dapidi.scheduler.services.Controller;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import static spark.Spark.get;
 import static spark.Spark.post;
 import static spark.Spark.put;

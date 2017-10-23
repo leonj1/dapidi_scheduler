@@ -12,7 +12,7 @@ class MyTest(unittest.TestCase):
     def test_health_check(self):
         r = requests.get("{}/public/health".format(server))
         self.assertEqual(r.status_code, 200)
-        r = requests.get("{}/public/health".format(client))
+        r = requests.get("{}/health".format(client))
         self.assertEqual(r.status_code, 200)
 #
 #     # @unittest.skip("testing skipping")
