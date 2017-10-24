@@ -14,6 +14,29 @@ class MyTest(unittest.TestCase):
         self.assertEqual(r.status_code, 200)
         r = requests.get("{}/health".format(client))
         self.assertEqual(r.status_code, 200)
+
+        # Create a new scheduled event
+        payload = {
+            "name": "Hello World",
+            "command": "ls -l /tmp",
+            "machine": "localhost",
+            "schedule": "* * * * *",
+            "run_as": "root",
+            "user_profile": "/tmp/user.profile",
+            "alarm_if_fail": "1",
+            "retry_on_failure": "3",
+            "cron_date": "something",
+            "condition": "anther something",
+            "std_out_file": "/tmp/stdout.out",
+            "std_err_file": "/tmp/stderr.err",
+            "comment": "Hello world job",
+            "max_run_time": "1",
+            "max_retry": "3"
+        }
+        r = requests.post("{}/jobs".format(server), json=payload)
+        self.assertEqual(r.status_code, 200)
+        self.assertEquals(r.content, "saved")
+
 #
 #     # @unittest.skip("testing skipping")
 #     def test_create_reminder(self):

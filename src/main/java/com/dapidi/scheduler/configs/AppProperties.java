@@ -61,6 +61,18 @@ public class AppProperties {
         return Integer.parseInt(this.getProperty.value("scheduler.server.http.port"));
     }
 
+    public String clientListJobsUrl() throws PropertiesFileNotFoundException, IOException {
+        return this.getProperty.value("client.list.jobs.url");
+    }
+
+    public String clientListJobByUuidUrl() throws PropertiesFileNotFoundException, IOException {
+        return this.getProperty.value("client.list.job.by.uuid.url");
+    }
+
+    public String clientHealthUrl() throws PropertiesFileNotFoundException, IOException {
+        return this.getProperty.value("client.health.url");
+    }
+
     public List<RunState> jobStatesThatCanBeStarted() {
         return new ArrayList<RunState>(){{
             add(RunState.INACTIVE);

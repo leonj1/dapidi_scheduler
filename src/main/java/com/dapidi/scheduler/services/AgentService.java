@@ -1,6 +1,6 @@
 package com.dapidi.scheduler.services;
 
-import com.dapidi.scheduler.configs.AppProperties;
+import com.dapidi.scheduler.context.agents.AddAgentContext;
 import com.dapidi.scheduler.enums.AgentState;
 import com.dapidi.scheduler.enums.RunState;
 import com.dapidi.scheduler.models.Agent;
@@ -10,6 +10,7 @@ import com.dapidi.scheduler.models.JobInstance;
 import com.dapidi.scheduler.response.AgentCommandResponse;
 import com.dapidi.scheduler.response.DispatchAgentResponse;
 import com.google.common.collect.Maps;
+import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,34 +26,37 @@ import static com.github.choonchernlim.betterPreconditions.preconditions.Precond
  **/
 public class AgentService {
     private static final Logger log = LoggerFactory.getLogger(AgentService.class);
-//    private static final AgentHeadquarters instance = new AgentHeadquarters();
 
     private Map<String, Agent> agents;
     private Boolean getPhoneMissingClients;
-    private Integer getClientDefaultPort;
+    private AppHttpClient appHttpClient;
 
-    public AgentService(Boolean getPhoneMissingClients, Integer getClientDefaultPort) {
+    public AgentService(Boolean getPhoneMissingClients, AppHttpClient appHttpClient) {
         this.getPhoneMissingClients = getPhoneMissingClients;
-        this.getClientDefaultPort = getClientDefaultPort;
+        this.appHttpClient = appHttpClient;
         this.agents = Maps.newHashMap();
     }
 
-    public void checkIn(String machine) {
-        if (this.agents.containsKey(machine)) {
-            Agent agent = this.agents.get(machine);
+    public void checkIn(AddAgentContext context) {
+        if (this.agents.containsKey(context.getMachine())) {
+            Agent agent = this.agents.get(context.getMachine());
             agent.setState(AgentState.ONLINE);
         } else {
-            register(machine);
+            register(context);
         }
     }
 
-    public UUID register(String machine) {
-        if (this.agents.containsKey(machine)) {
-            return this.agents.get(machine).getId();
+    public UUID register(AddAgentContext context) {
+        if (this.agents.containsKey(context.getMachine())) {
+            return this.agents.get(context.getMachine()).getId();
         }
-        log.info(String.format("Registering machine %s", machine));
-        Agent agent = new Agent(machine, this.getClientDefaultPort);
-        this.agents.put(machine, agent);
+        log.info(String.format("Registering machine %s", context.getMachine()));
+        Agent agent = new Agent(
+                context.getMachine(),
+                context.getSelf(),
+                appHttpClient
+        );
+        this.agents.put(context.getMachine(), agent);
         return agent.getId();
     }
 
@@ -68,44 +72,38 @@ public class AgentService {
         // find the machine where this job is expected to be running
         String machine = job.getJobDefinition().getMachine();
 
-        if (!this.agents.containsKey(machine)) {
-            boolean foundHost = false;
-            if (this.getPhoneMissingClients) {
-                String clientUrl = String.format("http://%s:%d/health", machine, this.getClientDefaultPort);
-                HttpGet httpGet = new HttpGet(clientUrl);
-                try {
-                    int statusCode = httpGet.statusCode();
-                    if (statusCode == 200) {
-                        foundHost = true;
-                        register(machine);
-                    } else {
-                        log.error(String.format("Healthcheck failed for machine %s. Status code %d", machine, statusCode));
-                    }
-                } catch (Exception e) {
-                    log.error(String.format("Unable to get healthcheck for machine %s. Error: %s", machine, e.getMessage()));
+        if (!this.agents.containsKey(machine) && this.getPhoneMissingClients) {
+            try {
+                if (this.agents.get(machine).health() != HttpStatus.OK_200) {
+                    log.warn(String.format("Machine %s not registered to run job %s", machine, job.getId()));
+                    return new DispatchAgentResponse(false, "No agent registered to that machine.");
                 }
-            }
-            if (!foundHost) {
-                log.warn(String.format("Machine %s not registered to run job %s", machine, job.getId()));
-                return new DispatchAgentResponse(false, "No agent registered to that machine.");
+            } catch (Exception e) {
+                log.error(String.format("Unable to get healthcheck for machine %s. Error: %s", machine, e.getMessage()));
             }
         }
 
         Agent agent = this.agents.get(machine);
 
         // if we think the job should be running ask the target machine if they are already working on it
-        boolean isBeingWorkedOn = false;
         try {
-            isBeingWorkedOn = agent.hasJobInstance(jobInstance.getId());
-            if (isBeingWorkedOn) {
+            if (agent.hasJobInstance(jobInstance.getId())) {
                 log.info(String.format("JobInstance %s is already being worked on", jobInstance.getId()));
                 return new DispatchAgentResponse(true, "Already being worked on");
             } else {
                 log.info(String.format("Telling the agent to start working on job %s", job.getId()));
-                JobForAgent jobForAgent = new JobForAgent(jobInstance.getId(), job.getJobDefinition());
-                AgentCommandResponse response = agent.command(jobForAgent, runState);
+                AgentCommandResponse response = agent.command(
+                        new JobForAgent(
+                                jobInstance.getId(),
+                                job.getJobDefinition()
+                        ),
+                        runState
+                );
                 log.info(String.format("Registered that we are working on job %s", job.getId()));
-                return new DispatchAgentResponse(response.isResult(), response.getMessage());
+                return new DispatchAgentResponse(
+                        response.isResult(),
+                        response.getMessage()
+                );
             }
         } catch (Exception e) {
             String message = String.format("Problem checking machine %s to see if its working on job_instance %s", machine, jobInstance.getId());

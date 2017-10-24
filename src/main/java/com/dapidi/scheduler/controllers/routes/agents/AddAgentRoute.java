@@ -1,11 +1,10 @@
 package com.dapidi.scheduler.controllers.routes.agents;
 
 import com.dapidi.scheduler.context.agents.AddAgentContext;
-import com.dapidi.scheduler.controllers.routes.ExitRoute;
 import com.dapidi.scheduler.services.AgentService;
+import com.dapidi.scheduler.services.SimpleExitRoute;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
-import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
@@ -18,7 +17,7 @@ import java.util.UUID;
  * Created for K and M Consulting LLC.
  * Created by Jose M Leon 2017
  **/
-public class AddAgentRoute implements Route, ExitRoute {
+public class AddAgentRoute implements Route {
     private static final Logger log = LoggerFactory.getLogger(AddAgentRoute.class);
     private AgentService agentService;
     private Gson gson;
@@ -33,11 +32,17 @@ public class AddAgentRoute implements Route, ExitRoute {
         try {
             context = this.gson.fromJson(payload, AddAgentContext.class);
         } catch (JsonSyntaxException e) {
-            return this.exit(res, HttpStatus.BAD_REQUEST_400, "invalid json", e);
+            return SimpleExitRoute.builder(res).BAD_REQUEST_400().text("invalid json", e);
         }
-        UUID agentId = this.agentService.register(context.machine);
-        log.info(String.format("Agent for machine %s registered as id %s", context.machine, agentId.toString()));
-        return this.exit(res, HttpStatus.OK_200, agentId.toString(), null);
+        UUID agentId = this.agentService.register(context);
+        log.info(
+                String.format(
+                        "Agent for machine %s registered as id %s",
+                        context.getMachine(),
+                        agentId.toString()
+                )
+        );
+        return SimpleExitRoute.builder(res).OK_200().text(agentId.toString());
     }
 
     @Override

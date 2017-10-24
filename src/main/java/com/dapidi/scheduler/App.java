@@ -32,6 +32,7 @@ import com.dapidi.scheduler.services.Controller;
 import com.dapidi.scheduler.services.JobService;
 import com.dapidi.scheduler.services.MaintenanceJobs;
 import com.dapidi.scheduler.services.RestEndpoints;
+import com.dapidi.scheduler.services.SchedulerAppHttpClient;
 import com.josemleon.CommandlineParser;
 import com.josemleon.GetEffectiveProperty;
 import com.josemleon.GetProperty;
@@ -85,7 +86,10 @@ public class App {
         );
         AgentService agentService = new AgentService(
                 appProperties.getPhoneMissingClients(),
-                appProperties.getClientDefaultPort()
+                new SchedulerAppHttpClient(
+                        appProperties.clientListJobsUrl(),
+                        appProperties.clientHealthUrl()
+                )
         );
 
         JobService jobService = new JobService(

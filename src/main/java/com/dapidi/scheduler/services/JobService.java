@@ -82,20 +82,20 @@ public class JobService {
     public void addJob(AddJobDefinitionContext context) {
         log.info("Adding a job");
         JobDefinition jobDefinition = new JobDefinition(
-                context.name,
-                context.command,
-                context.machine,
-                context.schedule
+                context.getName(),
+                context.getCommand(),
+                context.getMachine(),
+                context.getSchedule()
         );
-        jobDefinition.setRunAs(context.runAs);
-        jobDefinition.setUserProfile(context.userProfile);
-        jobDefinition.setAlarmIfFail(context.alarmIfFail);
-        jobDefinition.setRetryOnFailure(context.retryOnFailure);
-        jobDefinition.setCronDate(context.cronDate);
-        jobDefinition.setCondition(context.condition);
-        jobDefinition.setStdoutFile(context.stdoutFile);
-        jobDefinition.setStderrFile(context.stderrFile);
-        jobDefinition.setComment(context.comment);
+        jobDefinition.setRunAs(context.getRunAs());
+        jobDefinition.setUserProfile(context.getUserProfile());
+        jobDefinition.setAlarmIfFail(context.isAlarmIfFail());
+        jobDefinition.setRetryOnFailure(context.getRetryOnFailure());
+        jobDefinition.setCronDate(context.getCronDate());
+        jobDefinition.setCondition(context.getCondition());
+        jobDefinition.setStdoutFile(context.getStdoutFile());
+        jobDefinition.setStderrFile(context.getStderrFile());
+        jobDefinition.setComment(context.getComment());
         UUID jobDefinitionId = this.jobDefinitionRepository.save(jobDefinition);
         JobDefinition savedJobDefinition = this.jobDefinitionRepository.findOne(jobDefinitionId);
         log.info(String.format("Saved JobDefinition as %s", jobDefinitionId));
@@ -113,6 +113,7 @@ public class JobService {
         log.info("Updating a job");
     }
 
+    // TODO implement
     public Response deleteJob(UUID id) {
         log.info("Deleting job");
         return new DeleteJobResponse(true, "deleted");
