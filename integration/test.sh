@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 export CORE_NETWORK=core_net
 export PROJECT=scheduler

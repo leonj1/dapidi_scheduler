@@ -37,6 +37,17 @@ class MyTest(unittest.TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertEquals(r.content, "saved")
 
+        # verify job was recorded
+        # jobs/all
+        # force start a job
+        # verify job is started
+        # check client to see if they are running the job
+        # wait for job to stop running on client
+        # get status of job on server
+        # get job stdout and and stderr
+        # verify client is no longer running job
+        # get the next run of a job
+
 #
 #     # @unittest.skip("testing skipping")
 #     def test_create_reminder(self):
