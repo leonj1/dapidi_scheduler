@@ -31,7 +31,11 @@ public class AddJobRoute implements Route {
             return SimpleExitRoute.builder(res).BAD_REQUEST_400().text("invalid json", e);
         }
 
-        this.jobService.addJob(context);
+        try {
+            this.jobService.addJob(context);
+        } catch (Exception e) {
+            return SimpleExitRoute.builder(res).INTERNAL_SERVER_ERROR_500().text(e.getMessage(), e);
+        }
 
         return SimpleExitRoute.builder(res).OK_200().text("saved");
     }
