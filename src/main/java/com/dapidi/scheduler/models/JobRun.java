@@ -5,10 +5,6 @@ import com.dapidi.scheduler.enums.RunState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -20,7 +16,6 @@ import java.util.UUID;
  **/
 public class JobRun implements Comparable<JobRun>{
     private static final Logger log = LoggerFactory.getLogger(JobRun.class);
-
     private UUID id;
     private UUID jobInstanceId;
     private RunState runState;
@@ -30,43 +25,18 @@ public class JobRun implements Comparable<JobRun>{
     private Instant endTime;
     transient private JobInstance jobInstance;
 
+    public JobRun(UUID id, UUID jobInstanceId, RunState runState, JobInstanceState jobState, Integer exitCode, Instant startTime, Instant endTime) {
+        this(jobInstanceId, runState, exitCode, startTime, endTime);
+        this.id = id;
+        this.jobState = jobState;
+    }
+
     public JobRun(UUID jobInstanceId, RunState runState, Integer exitCode, Instant startTime, Instant endTime) {
         this.jobInstanceId = jobInstanceId;
         this.runState = runState;
         this.exitCode = exitCode;
         this.startTime = startTime;
         this.endTime = endTime;
-    }
-
-    public JobRun(UUID jobInstanceId, JobInstance jobInstance) {
-        this.jobInstanceId = jobInstanceId;
-        this.jobInstance = jobInstance;
-    }
-
-    public JobRun(ResultSet rs) throws SQLException {
-        this.jobInstanceId = UUID.fromString(rs.getString("job_instance_id"));
-//        JobInstance jobInstance = jobInstanceRepository.findOne(jobInstanceId);
-//        this.jobInstance = jobInstance;
-        this.runState = RunState.valueOf(rs.getString("run_state"));
-        this.jobState = JobInstanceState.valueOf(rs.getString("job_instance_state"));
-        this.exitCode = rs.getInt("exit_code");
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-        if (rs.getString("start_time") != null) {
-            try {
-                format.parse(rs.getString("start_time"));
-                this.startTime = format.parse(rs.getString("start_time")).toInstant();
-            } catch (ParseException e) {
-                log.error(String.format("Problem trying to format %s", rs.getString("start_time")));
-            }
-        }
-        if (rs.getString("end_time") != null) {
-            try {
-                format.parse(rs.getString("end_time"));
-                this.startTime = format.parse(rs.getString("end_time")).toInstant();
-            } catch (ParseException e) {
-                log.error(String.format("Problem trying to format %s", rs.getString("end_time")));
-            }
-        }
     }
 
     public UUID getId() {

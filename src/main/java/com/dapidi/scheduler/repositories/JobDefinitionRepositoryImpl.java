@@ -1,7 +1,8 @@
 package com.dapidi.scheduler.repositories;
 
-import com.dapidi.scheduler.mappers.JobDefinitionResultSetExtractor;
-import com.dapidi.scheduler.mappers.JobDefinitionRowMapper;
+import com.dapidi.scheduler.converters.ResultSetToJobDefinition;
+import com.dapidi.scheduler.mappers.MyMapperResultSetExtractor;
+import com.dapidi.scheduler.mappers.MyMapperRowMapper;
 import com.dapidi.scheduler.models.JobDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,13 +25,13 @@ public class JobDefinitionRepositoryImpl implements JobDefinitionRepository {
     private static final Logger log = LoggerFactory.getLogger(JobDefinitionRepositoryImpl.class);
     private static final String TABLE = "job_definition";
 
-    private JobDefinitionResultSetExtractor jobDefinitionResultSetExtractor;
-    private JobDefinitionRowMapper jobDefinitionRowMapper;
+    private MyMapperResultSetExtractor<ResultSetToJobDefinition, JobDefinition> myMapperResultSetExtractor;
+    private MyMapperRowMapper<ResultSetToJobDefinition, JobDefinition> myMapperRowMapper;
     private JdbcTemplate jdbcTemplate;
 
-    public JobDefinitionRepositoryImpl(JobDefinitionResultSetExtractor jobDefinitionResultSetExtractor, JobDefinitionRowMapper jobDefinitionRowMapper, JdbcTemplate jdbcTemplate) {
-        this.jobDefinitionResultSetExtractor = jobDefinitionResultSetExtractor;
-        this.jobDefinitionRowMapper = jobDefinitionRowMapper;
+    public JobDefinitionRepositoryImpl(MyMapperResultSetExtractor<ResultSetToJobDefinition, JobDefinition> myMapperResultSetExtractor, MyMapperRowMapper<ResultSetToJobDefinition, JobDefinition> myMapperRowMapper, JdbcTemplate jdbcTemplate) {
+        this.myMapperResultSetExtractor = myMapperResultSetExtractor;
+        this.myMapperRowMapper = myMapperRowMapper;
         this.jdbcTemplate = jdbcTemplate;
     }
 
@@ -40,7 +41,7 @@ public class JobDefinitionRepositoryImpl implements JobDefinitionRepository {
         log.debug(sql);
         JobDefinition jobDefinition = null;
         try {
-            jobDefinition = this.jdbcTemplate.queryForObject(sql, this.jobDefinitionRowMapper);
+            jobDefinition = this.jdbcTemplate.queryForObject(sql, this.myMapperRowMapper);
         } catch (DataAccessException e) {
             log.warn(String.format("No Job definition for id %s", id));
         }
@@ -51,7 +52,7 @@ public class JobDefinitionRepositoryImpl implements JobDefinitionRepository {
     public UUID save(JobDefinition item) {
         expect(item, "item").not().toBeNull().check();
         if (item.getId() != null) {
-            String sql = String.format("UPDATE %s SET name=?, command=?, schedule=?, machine=?, run_as=?, user_profile=?, alarm_if_fail=?, retry_on_failure=?, cron_date=?, condition=?, std_out_file=?, std_err_file=?, comment=?, max_run_time=?, max_retry=? where id = ?", TABLE);
+            String sql = String.format("UPDATE %s SET name=?, command=?, schedule=?, machine=?, run_as=?, user_profile=?, alarm_if_fail=?, retry_on_failure=?, cron_date=?, condition_statement=?, std_out_file=?, std_err_file=?, comment=?, max_run_time=?, max_retry=? where id = ?", TABLE);
             this.jdbcTemplate.update(
                     sql,
                     item.getName(),
@@ -110,6 +111,19 @@ public class JobDefinitionRepositoryImpl implements JobDefinitionRepository {
     public List<JobDefinition> findAll() {
         String sql = String.format("select * from %s", TABLE);
         log.debug(sql);
-        return this.jdbcTemplate.query(sql, this.jobDefinitionResultSetExtractor);
+        return this.jdbcTemplate.query(sql, this.myMapperResultSetExtractor);
+    }
+
+    @Override
+    public JobDefinition findByName(String name) {
+        String sql = String.format("select * from %s where name='%s'", TABLE, name);
+        log.debug(sql);
+        JobDefinition jobDefinition = null;
+        try {
+            jobDefinition = this.jdbcTemplate.queryForObject(sql, this.myMapperRowMapper);
+        } catch (DataAccessException e) {
+            log.warn(String.format("No Job definition for name %s", name));
+        }
+        return jobDefinition;
     }
 }

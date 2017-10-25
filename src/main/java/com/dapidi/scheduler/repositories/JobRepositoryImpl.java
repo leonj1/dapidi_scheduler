@@ -1,15 +1,14 @@
 package com.dapidi.scheduler.repositories;
 
-import com.dapidi.scheduler.mappers.JobResultSetExtractor;
-import com.dapidi.scheduler.mappers.JobRowMapper;
+import com.dapidi.scheduler.converters.ResultSetToJob;
+import com.dapidi.scheduler.mappers.MyMapperResultSetExtractor;
+import com.dapidi.scheduler.mappers.MyMapperRowMapper;
 import com.dapidi.scheduler.models.Job;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
-import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.List;
@@ -26,15 +25,16 @@ public class JobRepositoryImpl implements JobRepository {
     private static final Logger log = LoggerFactory.getLogger(JobRepositoryImpl.class);
     private static final String TABLE = "jobs";
 
-    private JobResultSetExtractor jobResultSetExtractor;
-    private JobRowMapper jobRowMapper;
+    private MyMapperResultSetExtractor<ResultSetToJob, Job> myMapperResultSetExtractor;
+    private MyMapperRowMapper<ResultSetToJob, Job> myMapperRowMapper;
     private JdbcTemplate jdbcTemplate;
 
-    public JobRepositoryImpl(JobResultSetExtractor jobResultSetExtractor, JobRowMapper jobRowMapper, JdbcTemplate jdbcTemplate) {
-        this.jobResultSetExtractor = jobResultSetExtractor;
-        this.jobRowMapper = jobRowMapper;
+    public JobRepositoryImpl(MyMapperResultSetExtractor<ResultSetToJob, Job> myMapperResultSetExtractor, MyMapperRowMapper<ResultSetToJob, Job> myMapperRowMapper, JdbcTemplate jdbcTemplate) {
+        this.myMapperResultSetExtractor = myMapperResultSetExtractor;
+        this.myMapperRowMapper = myMapperRowMapper;
         this.jdbcTemplate = jdbcTemplate;
     }
+
 
     @Override
     public void save(Job item) {
@@ -67,7 +67,7 @@ public class JobRepositoryImpl implements JobRepository {
         log.debug(sql);
         Job job = null;
         try {
-            job = this.jdbcTemplate.queryForObject(sql, this.jobRowMapper);
+            job = this.jdbcTemplate.queryForObject(sql, this.myMapperRowMapper);
         } catch (DataAccessException e) {
             log.warn(String.format("No Job found with id %s", id));
         }
@@ -78,6 +78,6 @@ public class JobRepositoryImpl implements JobRepository {
     public List<Job> findAll() {
         String sql = String.format("select * from %s", TABLE);
         log.debug(sql);
-        return this.jdbcTemplate.query(sql, this.jobResultSetExtractor);
+        return this.jdbcTemplate.query(sql, this.myMapperResultSetExtractor);
     }
 }

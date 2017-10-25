@@ -5,8 +5,6 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.UUID;
 
 /**
@@ -23,19 +21,14 @@ public class Job {
     private JobState jobState;
     transient private JobDefinition jobDefinition;
 
-    public Job() {
+    public Job(UUID id, UUID jobDefinitionId, JobState jobState) {
+        this(jobDefinitionId, jobState);
+        this.id = id;
     }
 
-    public Job(UUID jobDefinitionId, JobState jobState, JobDefinition jobDefinition) {
+    public Job(UUID jobDefinitionId, JobState jobState) {
         this.jobDefinitionId = jobDefinitionId;
         this.jobState = jobState;
-        this.jobDefinition = jobDefinition;
-    }
-
-    public Job(ResultSet rs) throws SQLException {
-        this.setId(UUID.fromString(rs.getString("id")));
-        this.setJobDefinitionId(UUID.fromString(rs.getString("job_definition_id")));
-        this.setJobState(JobState.valueOf(rs.getString("job_state")));
     }
 
     public void setJobDefinition(JobDefinition jobDefinition) {

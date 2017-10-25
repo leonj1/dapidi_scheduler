@@ -2,7 +2,6 @@ package com.dapidi.scheduler.models;
 
 import com.dapidi.scheduler.enums.JobInstanceState;
 import com.dapidi.scheduler.enums.RunState;
-import com.dapidi.scheduler.mappers.JobInstanceResultSetExtractor;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -11,10 +10,6 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
@@ -35,24 +30,20 @@ public class JobInstance {
     private UUID jobId;
     private JobInstanceState jobState;
     private Instant createTime;
-
     private Map<JobInstanceState, JobRun> byInstanceState;
     private Map<RunState, JobRun> byRunState;
     private Map<UUID, JobRun> byId;
     private List<JobRun> jobRuns;
-
     transient private Job job;
 
-    public JobInstance() {
-        this.byInstanceState = Maps.newHashMap();
-        this.byRunState = Maps.newHashMap();
-        this.byId = Maps.newHashMap();;
-        this.jobRuns = Lists.newArrayList();
+    public JobInstance(UUID id, UUID jobId, JobInstanceState jobState, Instant createTime) {
+        this(jobId, jobState);
+        this.id = id;
+        this.createTime = createTime;
     }
 
-    public JobInstance(Job job, JobInstanceState jobState) {
-        this.job = job;
-        this.jobId = job.getId();
+    public JobInstance(UUID jobId, JobInstanceState jobState) {
+        this.jobId = jobId;
         this.jobRuns = Lists.newArrayList();
         this.createTime = Instant.now();
         this.byInstanceState = Maps.newHashMap();
@@ -60,22 +51,6 @@ public class JobInstance {
         this.byId = Maps.newHashMap();
         this.jobRuns = Lists.newArrayList();
         this.jobState = jobState;
-    }
-
-    public JobInstance(ResultSet rs) throws SQLException {
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-        Instant createTime = null;
-        try {
-            format.parse(rs.getString("create_time"));
-            createTime = format.parse(rs.getString("create_time")).toInstant();
-        } catch (ParseException e) {
-            log.error(String.format("Problem trying to format %s", rs.getString("create_time")));
-        }
-        UUID jobId = UUID.fromString(rs.getString("job_id"));
-        this.setCreateTime(createTime);
-        this.setJobId(jobId);
-        this.setId(UUID.fromString(rs.getString("id")));
-        this.setJobId(jobId);
     }
 
     public void populate(List<JobRun> jobRuns) {

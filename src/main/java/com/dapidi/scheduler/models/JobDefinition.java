@@ -33,31 +33,31 @@ public class JobDefinition {
     private Integer maxRunTime;
     private Integer maxRetry;
 
+    public JobDefinition(UUID id, String name, String command, String schedule, String machine, String runAs, String userProfile, boolean alarmIfFail, Integer retryOnFailure, String cronDate, String condition, String stdoutFile, String stderrFile, String comment, Integer maxRunTime, Integer maxRetry) {
+        this(name, command, machine, schedule, runAs, userProfile, alarmIfFail, retryOnFailure, cronDate, condition, stdoutFile, stderrFile, comment);
+        this.id = id;
+        this.maxRunTime = maxRunTime;
+        this.maxRetry = maxRetry;
+    }
+
+    public JobDefinition(String name, String command, String machine, String schedule, String runAs, String userProfile, boolean alarmIfFail, Integer retryOnFailure, String cronDate, String condition, String stdoutFile, String stderrFile, String comment) {
+        this(name, command, machine, schedule);
+        this.runAs = runAs;
+        this.userProfile = userProfile;
+        this.alarmIfFail = alarmIfFail;
+        this.retryOnFailure = retryOnFailure;
+        this.cronDate = cronDate;
+        this.condition = condition;
+        this.stdoutFile = stdoutFile;
+        this.stderrFile = stderrFile;
+        this.comment = comment;
+    }
+
     public JobDefinition(String name, String command, String machine, String schedule) {
         this.name = name;
         this.command = command;
         this.machine = machine;
         this.schedule = schedule;
-    }
-
-    public JobDefinition(ResultSet rs) throws SQLException {
-        this.name = rs.getString("name");
-        this.command = rs.getString("command");
-        this.machine = rs.getString("machine");
-        this.schedule = rs.getString("schedule");
-
-        this.setId(UUID.fromString(rs.getString("id")));
-        this.setRunAs(rs.getString("run_as"));
-        this.setUserProfile(rs.getString("user_profile"));
-        this.setAlarmIfFail(rs.getBoolean("alarm_if_fail"));
-        this.setRetryOnFailure(rs.getInt("retry_on_failure"));
-        this.setCronDate(rs.getString("cron_date"));
-        this.setStdoutFile(rs.getString("std_out_file"));
-        this.setStderrFile(rs.getString("std_err_file"));
-        this.setComment(rs.getString("comment"));
-        this.setCondition(rs.getString("condition_statement"));
-        this.setMaxRunTime(rs.getInt("max_run_time"));
-        this.setMaxRetry(rs.getInt("max_retry"));
     }
 
     public String getSchedule() {

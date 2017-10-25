@@ -1,9 +1,9 @@
 package com.dapidi.scheduler.repositories;
 
+import com.dapidi.scheduler.converters.ResultSetToJobInstance;
 import com.dapidi.scheduler.enums.JobInstanceState;
-import com.dapidi.scheduler.mappers.JobInstanceResultSetExtractor;
-import com.dapidi.scheduler.mappers.JobInstanceRowMapper;
-import com.dapidi.scheduler.mappers.JobRunRowMapper;
+import com.dapidi.scheduler.mappers.MyMapperResultSetExtractor;
+import com.dapidi.scheduler.mappers.MyMapperRowMapper;
 import com.dapidi.scheduler.models.JobInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,18 +31,13 @@ public class JobInstanceRepositoryImpl implements JobInstanceRepository {
     private static final String TABLE = "job_instances";
 
     private JdbcTemplate jdbcTemplate;
-    private JobInstanceRowMapper jobInstanceRowMapper;
-    private JobInstanceResultSetExtractor jobInstanceResultSetExtractor;
-    private JobRunRowMapper jobRunRowMapper;
+    private MyMapperRowMapper<ResultSetToJobInstance, JobInstance> myMapperRowMapper;
+    private MyMapperResultSetExtractor<ResultSetToJobInstance, JobInstance> myMapperResultSetExtractor;
 
-    public JobInstanceRepositoryImpl() {
-    }
-
-    public JobInstanceRepositoryImpl(JdbcTemplate jdbcTemplate, JobInstanceRowMapper jobInstanceRowMapper, JobInstanceResultSetExtractor jobInstanceResultSetExtractor, JobRepository jobRepository, JobRunRepository jobRunRepository, JobRunRowMapper jobRunRowMapper) {
+    public JobInstanceRepositoryImpl(JdbcTemplate jdbcTemplate, MyMapperRowMapper<ResultSetToJobInstance, JobInstance> myMapperRowMapper, MyMapperResultSetExtractor<ResultSetToJobInstance, JobInstance> myMapperResultSetExtractor) {
         this.jdbcTemplate = jdbcTemplate;
-        this.jobRunRowMapper = jobRunRowMapper;
-        this.jobInstanceRowMapper = jobInstanceRowMapper;
-        this.jobInstanceResultSetExtractor = jobInstanceResultSetExtractor;
+        this.myMapperRowMapper = myMapperRowMapper;
+        this.myMapperResultSetExtractor = myMapperResultSetExtractor;
     }
 
     @Override
@@ -94,7 +89,7 @@ public class JobInstanceRepositoryImpl implements JobInstanceRepository {
         log.debug(sql);
         JobInstance result = null;
         try {
-            result = this.jdbcTemplate.queryForObject(sql, this.jobInstanceRowMapper);
+            result = this.jdbcTemplate.queryForObject(sql, this.myMapperRowMapper);
         } catch (DataAccessException e) {
             log.warn(String.format("Query for jobInstance %s returned no results", id));
         }
@@ -105,21 +100,21 @@ public class JobInstanceRepositoryImpl implements JobInstanceRepository {
     public List<JobInstance> findAll() {
         String sql = String.format("select * from %s", TABLE);
         log.debug(sql);
-        return this.jdbcTemplate.query(sql, this.jobInstanceResultSetExtractor);
+        return this.jdbcTemplate.query(sql, this.myMapperResultSetExtractor);
     }
 
     @Override
     public List<JobInstance> findActive() {
         String sql = String.format("select * from %s where job_state='ACTIVE'", TABLE);
         log.debug(sql);
-        return this.jdbcTemplate.query(sql, this.jobInstanceResultSetExtractor);
+        return this.jdbcTemplate.query(sql, this.myMapperResultSetExtractor);
     }
 
     @Override
     public List<JobInstance> findByJobId(UUID jobId) {
         String sql = String.format("select * from %s where job_id='%s'", TABLE, jobId);
         log.debug(sql);
-        return this.jdbcTemplate.query(sql, this.jobInstanceResultSetExtractor);
+        return this.jdbcTemplate.query(sql, this.myMapperResultSetExtractor);
     }
 
     @Override
@@ -132,7 +127,7 @@ public class JobInstanceRepositoryImpl implements JobInstanceRepository {
                 "ON c.id = p.jobs_id \n" +
                 "GROUP BY c.id,c.name", TABLE, TABLE);
         log.debug(sql);
-        return this.jdbcTemplate.query(sql, this.jobInstanceResultSetExtractor);
+        return this.jdbcTemplate.query(sql, this.myMapperResultSetExtractor);
     }
 
     @Override
@@ -143,7 +138,7 @@ public class JobInstanceRepositoryImpl implements JobInstanceRepository {
         }
         String sql = String.format("select * from %s where job_id='%s' and job_state NOT IN %s", TABLE, id, si.toString());
         log.debug(sql);
-        return this.jdbcTemplate.query(sql, this.jobInstanceResultSetExtractor);
+        return this.jdbcTemplate.query(sql, this.myMapperResultSetExtractor);
     }
 
     @Override
@@ -154,7 +149,7 @@ public class JobInstanceRepositoryImpl implements JobInstanceRepository {
         }
         String sql = String.format("select * from %s where create_time < '%s' and job_state IN %s", TABLE, date, si.toString());
         log.debug(sql);
-        return this.jdbcTemplate.query(sql, this.jobInstanceResultSetExtractor);
+        return this.jdbcTemplate.query(sql, this.myMapperResultSetExtractor);
     }
 
     @Override

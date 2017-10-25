@@ -16,8 +16,9 @@ class MyTest(unittest.TestCase):
         self.assertEqual(r.status_code, 200)
 
         # Create a new scheduled event
+        job_name = "Hello World"
         payload = {
-            "name": "Hello World",
+            "name": job_name,
             "command": "ls -l /tmp",
             "machine": "localhost",
             "schedule": "* * * * *",
@@ -38,6 +39,11 @@ class MyTest(unittest.TestCase):
         self.assertEquals(r.content, "saved")
 
         # verify job was recorded
+        r = requests.get("{}/jobs/{}".format(server, job_name))
+        d = json.loads(r.content)
+        self.assertEqual(r.status_code, 200)
+        self.assertEquals(d["name"], job_name)
+
         # jobs/all
         # force start a job
         # verify job is started

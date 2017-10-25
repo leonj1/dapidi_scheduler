@@ -14,4 +14,5 @@ public interface JobDefinitionRepository {
     UUID save(JobDefinition item);
     void delete(UUID id);
     List<JobDefinition> findAll();
+    JobDefinition findByName(String name);
 }

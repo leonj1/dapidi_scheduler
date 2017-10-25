@@ -74,6 +74,11 @@ public class JobService {
         return this.jobRepository.findAll();
     }
 
+    public JobDefinition getJobByName(String name) {
+        log.debug(String.format("Fetching job by name: %s", name));
+        return this.jobDefinitionRepository.findByName(name);
+    }
+
     public List<Jobs> getJobsAndInstances() {
         List<Jobs> jobs = Lists.newArrayList();
         return jobs;
@@ -81,31 +86,28 @@ public class JobService {
 
     public void addJob(AddJobDefinitionContext context) {
         log.info("Adding a job");
-        JobDefinition jobDefinition = new JobDefinition(
-                context.getName(),
-                context.getCommand(),
-                context.getMachine(),
-                context.getSchedule()
+        this.jobRepository.save(
+                new Job(
+                        this.jobDefinitionRepository.save(
+                                new JobDefinition(
+                                        context.getName(),
+                                        context.getCommand(),
+                                        context.getMachine(),
+                                        context.getSchedule(),
+                                        context.getRunAs(),
+                                        context.getUserProfile(),
+                                        context.isAlarmIfFail(),
+                                        context.getRetryOnFailure(),
+                                        context.getCronDate(),
+                                        context.getCondition(),
+                                        context.getStdoutFile(),
+                                        context.getStderrFile(),
+                                        context.getComment()
+                                )
+                        ),
+                        JobState.INACTIVE
+                )
         );
-        jobDefinition.setRunAs(context.getRunAs());
-        jobDefinition.setUserProfile(context.getUserProfile());
-        jobDefinition.setAlarmIfFail(context.isAlarmIfFail());
-        jobDefinition.setRetryOnFailure(context.getRetryOnFailure());
-        jobDefinition.setCronDate(context.getCronDate());
-        jobDefinition.setCondition(context.getCondition());
-        jobDefinition.setStdoutFile(context.getStdoutFile());
-        jobDefinition.setStderrFile(context.getStderrFile());
-        jobDefinition.setComment(context.getComment());
-        UUID jobDefinitionId = this.jobDefinitionRepository.save(jobDefinition);
-        JobDefinition savedJobDefinition = this.jobDefinitionRepository.findOne(jobDefinitionId);
-        log.info(String.format("Saved JobDefinition as %s", jobDefinitionId));
-
-        Job job = new Job(
-                jobDefinitionId,
-                JobState.INACTIVE,
-                savedJobDefinition
-        );
-        this.jobRepository.save(job);
         log.info("Saved Job");
     }
 

@@ -11,16 +11,15 @@ import com.dapidi.scheduler.controllers.routes.agents.ListAllAgentsRoute;
 import com.dapidi.scheduler.controllers.routes.health.HealthCheckRoute;
 import com.dapidi.scheduler.controllers.routes.jobs.AddJobRoute;
 import com.dapidi.scheduler.controllers.routes.jobs.GetAllJobsRoute;
+import com.dapidi.scheduler.controllers.routes.jobs.GetJobByNameRoute;
 import com.dapidi.scheduler.controllers.routes.jobs.UpdateJobInstanceRoute;
 import com.dapidi.scheduler.controllers.routes.jobs.UpdateJobRoute;
-import com.dapidi.scheduler.mappers.JobDefinitionResultSetExtractor;
-import com.dapidi.scheduler.mappers.JobDefinitionRowMapper;
-import com.dapidi.scheduler.mappers.JobInstanceResultSetExtractor;
-import com.dapidi.scheduler.mappers.JobInstanceRowMapper;
-import com.dapidi.scheduler.mappers.JobResultSetExtractor;
-import com.dapidi.scheduler.mappers.JobRowMapper;
-import com.dapidi.scheduler.mappers.JobRunResultSetExtractor;
-import com.dapidi.scheduler.mappers.JobRunRowMapper;
+import com.dapidi.scheduler.converters.ResultSetToJob;
+import com.dapidi.scheduler.converters.ResultSetToJobDefinition;
+import com.dapidi.scheduler.converters.ResultSetToJobInstance;
+import com.dapidi.scheduler.converters.ResultSetToJobRun;
+import com.dapidi.scheduler.mappers.MyMapperResultSetExtractor;
+import com.dapidi.scheduler.mappers.MyMapperRowMapper;
 import com.dapidi.scheduler.repositories.JobDefinitionRepositoryImpl;
 import com.dapidi.scheduler.repositories.JobInstanceRepositoryImpl;
 import com.dapidi.scheduler.repositories.JobRepositoryImpl;
@@ -92,37 +91,29 @@ public class App {
                 )
         );
 
+        JobInstanceRepositoryImpl jobInstanceRepository = new JobInstanceRepositoryImpl(
+                jdbcTemplate,
+                new MyMapperRowMapper<>(new ResultSetToJobInstance()),
+                new MyMapperResultSetExtractor<>(new ResultSetToJobInstance())
+        );
+
+        JobDefinitionRepositoryImpl jobDefinitionRepository = new JobDefinitionRepositoryImpl(
+                new MyMapperResultSetExtractor<>(new ResultSetToJobDefinition()),
+                new MyMapperRowMapper<>(new ResultSetToJobDefinition()),
+                jdbcTemplate
+        );
+
         JobService jobService = new JobService(
-                new JobDefinitionRepositoryImpl(
-                        new JobDefinitionResultSetExtractor(),
-                        new JobDefinitionRowMapper(),
-                        jdbcTemplate
-                ),
-                new JobInstanceRepositoryImpl(
-                        jdbcTemplate,
-                        new JobInstanceRowMapper(),
-                        new JobInstanceResultSetExtractor(),
-                        new JobRepositoryImpl(
-                                new JobResultSetExtractor(),
-                                new JobRowMapper(),
-                                jdbcTemplate
-                        ),
-                        new JobRunRepositoryImpl(
-                                jdbcTemplate,
-                                new JobRunResultSetExtractor(),
-                                new JobRunRowMapper()
-                        ),
-                        new JobRunRowMapper()
-                ),
+                jobDefinitionRepository,
+                jobInstanceRepository,
                 new JobRepositoryImpl(
-                        new JobResultSetExtractor(),
-                        new JobRowMapper(),
+                        new MyMapperResultSetExtractor<>(new ResultSetToJob()),
+                        new MyMapperRowMapper<>(new ResultSetToJob()),
                         jdbcTemplate
                 ),
                 new JobRunRepositoryImpl(
                         jdbcTemplate,
-                        new JobRunResultSetExtractor(),
-                        new JobRunRowMapper()
+                        new MyMapperResultSetExtractor<>(new ResultSetToJobRun())
                 ),
                 appProperties.jobStatesThatCanBeStarted(),
                 appProperties.jobInstanceStatesThatCanBeStarted(),
@@ -140,7 +131,8 @@ public class App {
                                 new GetAllJobsRoute(jobService),
                                 new AddJobRoute(jobService),
                                 new UpdateJobRoute(jobService),
-                                new UpdateJobInstanceRoute(jobService)
+                                new UpdateJobInstanceRoute(jobService),
+                                new GetJobByNameRoute(jobService)
                         ),
                         new CommunicationBetweenAgentsController(
                                 new AddAgentRoute(agentService),
@@ -157,27 +149,8 @@ public class App {
         MaintenanceJobs maintenanceJobs = new MaintenanceJobs(
                 new Runnable[]{
                         new CheckForNewJobs(
-                                new JobInstanceRepositoryImpl(
-                                        jdbcTemplate,
-                                        new JobInstanceRowMapper(),
-                                        new JobInstanceResultSetExtractor(),
-                                        new JobRepositoryImpl(
-                                                new JobResultSetExtractor(),
-                                                new JobRowMapper(),
-                                                jdbcTemplate
-                                        ),
-                                        new JobRunRepositoryImpl(
-                                                jdbcTemplate,
-                                                new JobRunResultSetExtractor(),
-                                                new JobRunRowMapper()
-                                        ),
-                                        new JobRunRowMapper()
-                                ),
-                                new JobDefinitionRepositoryImpl(
-                                        new JobDefinitionResultSetExtractor(),
-                                        new JobDefinitionRowMapper(),
-                                        jdbcTemplate
-                                ),
+                                jobInstanceRepository,
+                                jobDefinitionRepository,
                                 jobService,
                                 agentService
                         ),

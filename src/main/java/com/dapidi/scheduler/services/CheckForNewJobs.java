@@ -44,8 +44,9 @@ public class CheckForNewJobs implements Runnable {
                         this.jobInstanceRepository.findOne(
                                 this.jobInstanceRepository.save(
                                         new JobInstance(
-                                                job,
-                                                JobInstanceState.ACTIVE)
+                                                job.getId(),
+                                                JobInstanceState.ACTIVE
+                                        )
                                 )
                         ),
                         RunState.STARTED

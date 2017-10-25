@@ -1,14 +1,12 @@
 package com.dapidi.scheduler.repositories;
 
-import com.dapidi.scheduler.mappers.JobRunResultSetExtractor;
-import com.dapidi.scheduler.mappers.JobRunRowMapper;
+import com.dapidi.scheduler.converters.ResultSetToJobRun;
+import com.dapidi.scheduler.mappers.MyMapperResultSetExtractor;
 import com.dapidi.scheduler.models.JobRun;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
-import org.springframework.stereotype.Component;
 
 import java.sql.Date;
 import java.util.HashMap;
@@ -27,20 +25,18 @@ public class JobRunRepositoryImpl implements JobRunRepository {
     private static final String TABLE = "job_run";
 
     private JdbcTemplate jdbcTemplate;
-    private JobRunResultSetExtractor jobRunResultSetExtractor;
-    private JobRunRowMapper jobRunRowMapper;
+    private MyMapperResultSetExtractor<ResultSetToJobRun, JobRun> myMapperResultSetExtractor;
 
-    public JobRunRepositoryImpl(JdbcTemplate jdbcTemplate, JobRunResultSetExtractor jobRunResultSetExtractor, JobRunRowMapper jobRunRowMapper) {
+    public JobRunRepositoryImpl(JdbcTemplate jdbcTemplate, MyMapperResultSetExtractor<ResultSetToJobRun, JobRun> myMapperResultSetExtractor) {
         this.jdbcTemplate = jdbcTemplate;
-        this.jobRunResultSetExtractor = jobRunResultSetExtractor;
-        this.jobRunRowMapper = jobRunRowMapper;
+        this.myMapperResultSetExtractor = myMapperResultSetExtractor;
     }
 
     @Override
     public List<JobRun> findByJobInstanceId(UUID id) {
         String sql = String.format("select * from %s where job_instance_id='%s'", TABLE, id);
         log.debug(sql);
-        return this.jdbcTemplate.query(sql, this.jobRunResultSetExtractor);
+        return this.jdbcTemplate.query(sql, this.myMapperResultSetExtractor);
     }
 
     @Override
